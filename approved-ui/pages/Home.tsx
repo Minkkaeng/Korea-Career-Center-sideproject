@@ -5,6 +5,47 @@ import { motion, type Variants, AnimatePresence } from "framer-motion";
 
 export default function Home() {
   const [showNoticeModal, setShowNoticeModal] = useState(true);
+  const [showPosterPopup, setShowPosterPopup] = useState(false);
+  const [hiddenTodayIds, setHiddenTodayIds] = useState<number[]>([]);
+
+  const newestPosters = [
+    {
+      id: 1,
+      title: "구직자·재직자를 위한 ‘생성형 AI 활용’ 실무 과정 교육생 모집",
+      badge: "전액 무료 교육",
+      image: "/images/news/generative_ai_course.jpg",
+    },
+    {
+      id: 2,
+      title: "한국폴리텍대학 로봇캠퍼스 2027학년도 신입생 모집",
+      badge: "2027 신입생 모집",
+      image: "/images/news/polytech_robot_2027.png",
+    },
+  ];
+  const [visiblePosters, setVisiblePosters] = useState(newestPosters);
+
+  useEffect(() => {
+    if (!showNoticeModal) {
+      const timer = window.setTimeout(() => {
+        const today = new Date().toLocaleDateString("ko-KR");
+        const availablePosters = newestPosters.filter(
+          (poster) => window.localStorage.getItem(`poster-popup-hidden-${poster.id}`) !== today,
+        );
+        setVisiblePosters(availablePosters);
+        setShowPosterPopup(availablePosters.length > 0);
+      }, 180);
+      return () => window.clearTimeout(timer);
+    }
+  }, [showNoticeModal]);
+
+  const dismissPoster = (posterId: number) => {
+    if (hiddenTodayIds.includes(posterId)) {
+      window.localStorage.setItem(`poster-popup-hidden-${posterId}`, new Date().toLocaleDateString("ko-KR"));
+    }
+    const remainingPosters = visiblePosters.filter((poster) => poster.id !== posterId);
+    setVisiblePosters(remainingPosters);
+    setShowPosterPopup(remainingPosters.length > 0);
+  };
 
   // 일반 부드러운 스크롤 (자동 스크롤 비활성화)
   useEffect(() => {
@@ -59,19 +100,20 @@ export default function Home() {
               >
                 <X className="w-6 h-6" />
               </button>
-              
+
               <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-3xl">🛠️</span>
               </div>
-              
+
               <h2 className="text-2xl font-black text-slate-900 mb-4">안내 말씀드립니다</h2>
               <div className="text-slate-600 leading-relaxed mb-8 break-keep">
                 <p className="font-bold text-slate-800 mb-2">현재 홈페이지 수정 중에 있습니다.</p>
                 <p>
-                  홈페이지 이용에 다소 불편함이 있더라도<br className="block sm:hidden" /> 양해 부탁드립니다.
+                  홈페이지 이용에 다소 불편함이 있더라도
+                  <br className="block sm:hidden" /> 양해 부탁드립니다.
                 </p>
               </div>
-              
+
               <button
                 onClick={() => setShowNoticeModal(false)}
                 className="w-full py-4 bg-[#1e3a8a] text-white font-bold rounded-xl hover:bg-[#0f2942] transition-colors"
@@ -80,6 +122,56 @@ export default function Home() {
               </button>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showPosterPopup && (
+          <motion.div
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.25, staggerChildren: 0.08 }}
+            className="fixed left-4 top-4 z-[90] flex max-h-[84vh] w-[calc(100vw-24px)] flex-col items-start gap-4 overflow-y-auto px-1 sm:w-auto sm:flex-row sm:items-start sm:gap-5"
+          >
+            {visiblePosters.map((poster) => (
+              <motion.section
+                key={poster.id}
+                initial={{ opacity: 0, y: -12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                className="w-[min(360px,calc(100vw-32px))] shrink-0 overflow-hidden border border-slate-300 bg-white shadow-[0_12px_36px_rgba(15,23,42,0.28)]"
+                aria-label={poster.title}
+              >
+                <img
+                  src={poster.image}
+                  alt={poster.title}
+                  className="max-h-[62vh] w-full bg-slate-100 object-contain sm:max-h-[68vh]"
+                />
+                <div className="flex min-h-10 items-center justify-between gap-2 border-t border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700">
+                  <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={hiddenTodayIds.includes(poster.id)}
+                      onChange={(event) =>
+                        setHiddenTodayIds((ids) =>
+                          event.target.checked ? [...ids, poster.id] : ids.filter((id) => id !== poster.id),
+                        )
+                      }
+                      className="h-3.5 w-3.5 accent-slate-700"
+                    />
+                    하루 동안 창 열지 않음
+                  </label>
+                  <button
+                    onClick={() => dismissPoster(poster.id)}
+                    className="shrink-0 rounded border border-slate-300 px-2 py-0.5 text-xs text-slate-700 hover:bg-slate-100"
+                  >
+                    닫기
+                  </button>
+                </div>
+              </motion.section>
+            ))}
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -167,8 +259,10 @@ export default function Home() {
               <span className="text-blue-600">보다 쉽게.</span>
             </h2>
             <p className="text-lg md:text-3xl text-slate-500 font-medium leading-relaxed break-keep">
-              체계적인 데이터 분석과 직업 심리 적성검사로<br />
-              나에게 맞는 과정을 간편하게 선택하고,<br />
+              체계적인 데이터 분석과 직업 심리 적성검사로
+              <br />
+              나에게 맞는 과정을 간편하게 선택하고,
+              <br />
               AI 상담부터 취업 연계까지 손쉽게 신청할 수 있어요.
             </p>
           </motion.div>
@@ -190,7 +284,8 @@ export default function Home() {
                 variants={fadeInUp}
                 className="text-3xl md:text-5xl lg:text-6xl font-black leading-[1.15] tracking-tight break-keep text-slate-900 mb-8"
               >
-                AI기반 진로 진단과<br className="block md:hidden" /> 맞춤형 상담으로
+                AI기반 진로 진단과
+                <br className="block md:hidden" /> 맞춤형 상담으로
                 <br />
                 <span className="text-blue-600">
                   나에게 딱 맞는
@@ -257,8 +352,10 @@ export default function Home() {
               <span className="text-cyan-400">바로 시작하세요.</span>
             </h2>
             <p className="text-xl md:text-3xl text-slate-400 font-medium mb-24 leading-relaxed break-keep">
-              선착순 마감 없는 상시 교육 과정으로<br />
-              내 커리어 성장을<br />
+              선착순 마감 없는 상시 교육 과정으로
+              <br />
+              내 커리어 성장을
+              <br />
               지금 당장 시작하세요.
             </p>
           </motion.div>
