@@ -8,6 +8,7 @@ const titles: Record<string, string> = {
   partners: "협력기관",
   apply: "상담신청",
   notices: "공지·소식",
+  news: "공지·소식",
   contact: "오시는 길",
   "job-info": "취업정보",
 };

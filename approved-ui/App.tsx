@@ -36,6 +36,7 @@ const titles: Record<string, string> = {
   '/partners': '협력기관 | 한국진로커리어센터',
   '/apply': '상담신청 | 한국진로커리어센터',
   '/notices': '공지·소식 | 한국진로커리어센터',
+  '/news': '공지·소식 | 한국진로커리어센터',
   '/instructors': '강사매칭 | 한국진로커리어센터',
   '/contact': '오시는 길 | 한국진로커리어센터',
   '/job-info': '취업정보 | 한국진로커리어센터',
@@ -70,6 +71,7 @@ function App() {
           <Route path="/partners" element={<Partners />} />
           <Route path="/apply" element={<Apply />} />
           <Route path="/notices" element={<Notices />} />
+          <Route path="/news" element={<Navigate to="/notices" replace />} />
           <Route path="/instructors" element={<Instructors />} />
           <Route path="/mentoring" element={<Mentoring />} />
           <Route path="/contact" element={<Contact />} />
